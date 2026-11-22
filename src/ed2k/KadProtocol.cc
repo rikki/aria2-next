@@ -469,26 +469,29 @@ bool parseKadPublishResultPayload(KadPublishResult& result,
 }
 
 std::string createKadFirewalledRequestPayload(uint16_t tcpPort,
-                                              const std::string& id,
-                                              uint8_t options)
+                                              const std::string&,
+                                              uint8_t)
 {
-  validateHashLength(id);
-  std::string payload = packUInt16(tcpPort);
-  payload += id;
-  payload.push_back(static_cast<char>(options));
-  return payload;
+  // eMule's KADEMLIA_FIREWALLED_REQ carries only the TCP port. The former
+  // userHash/options extension made the peer use an unknown obfuscation key,
+  // so every inbound check connection stalled on the handshake.
+  return packUInt16(tcpPort);
 }
 
 bool parseKadFirewalledRequestPayload(KadFirewalledRequest& request,
                                       const std::string& payload)
 {
-  if (payload.size() != HASH_LENGTH + 3) {
+  // Standard eMule payload is the TCP port alone; the older 19-byte form is
+  // still accepted so peers running an unpatched build keep working.
+  if (payload.size() < 2) {
     return false;
   }
   size_t offset = 0;
   request.tcpPort = readUInt16(readBytes(payload, offset, 2).data());
-  request.id = readBytes(payload, offset, HASH_LENGTH);
-  request.options = readByte(payload, offset);
+  if (payload.size() == HASH_LENGTH + 3) {
+    request.id = readBytes(payload, offset, HASH_LENGTH);
+    request.options = readByte(payload, offset);
+  }
   return true;
 }
 

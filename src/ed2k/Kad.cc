@@ -37,6 +37,9 @@ constexpr auto sourceLookupInterval = 1h;
 constexpr auto sourceLookupRetry = 10min; // while a download has no source
 constexpr auto publishInterval = 5h;
 constexpr auto firewallCheckInterval = 1h;
+// Retry sooner while we are considered unreachable, so one unlucky probe
+// round does not keep us firewalled for a whole hour.
+constexpr auto firewallRetryInterval = 10min;
 constexpr auto firewallAnswerTime = 90s;
 constexpr auto saveInterval = 5min;
 constexpr size_t maxIndexedSources = 20000;
@@ -647,8 +650,10 @@ void Kad::bootstrap(Clock::time_point)
 
 void Kad::checkFirewall(Clock::time_point now)
 {
+  const auto interval =
+      firewalled_ ? firewallRetryInterval : firewallCheckInterval;
   if (firewallCheck_ != Clock::time_point{} &&
-      now - firewallCheck_ < firewallCheckInterval) {
+      now - firewallCheck_ < interval) {
     if (!firewalled_ && reachedAt_ < firewallCheck_ &&
         now - firewallCheck_ > firewallAnswerTime) {
       log::info("ED2K: Kad reports our TCP port closed");
