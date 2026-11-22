@@ -129,9 +129,7 @@ std::string createKadPublishResultPayload(const std::string& fileId,
                                           uint8_t count);
 bool parseKadPublishResultPayload(KadPublishResult& result,
                                   const std::string& payload);
-std::string createKadFirewalledRequestPayload(uint16_t tcpPort,
-                                              const std::string& id,
-                                              uint8_t options);
+std::string createKadFirewalledRequestPayload(uint16_t tcpPort);
 bool parseKadFirewalledRequestPayload(KadFirewalledRequest& request,
                                       const std::string& payload);
 std::string createKadFirewalledResponsePayload(const std::string& ipAddress);

@@ -305,8 +305,8 @@ void Kad::datagram(const ip::udp::endpoint& from, const std::string& data)
   // Answers carry the sender's key in obfuscated packets only; plain ones
   // are answered in plain.
   KadContact sender = known(from);
-  if (opcode == KAD_FIREWALLED_REQ || opcode == KAD_FIREWALLED_RES ||
-      opcode == KAD_FIREWALLED_ACK_RES) {
+  if (opcode == KAD_FIREWALLED_REQ || opcode == KAD_FIREWALLED2_REQ ||
+      opcode == KAD_FIREWALLED_RES || opcode == KAD_FIREWALLED_ACK_RES) {
     log::diag("ED2K-DIAG: Kad rx op=0x{:02x} from {}:{} size={}", opcode,
               from.address().to_string(), from.port(), payload.size());
   }
@@ -534,7 +534,8 @@ void Kad::handle(const ip::udp::endpoint& from, uint8_t opcode,
     }
     return;
   }
-  case KAD_FIREWALLED_REQ: {
+  case KAD_FIREWALLED_REQ:
+  case KAD_FIREWALLED2_REQ: {
     // Another node tests whether its TCP port is reachable from outside.
     KadFirewalledRequest request;
     if (!parseKadFirewalledRequestPayload(request, payload) ||
@@ -684,8 +685,7 @@ void Kad::checkFirewall(Clock::time_point now)
     }
     firewallCheckers_.insert(address);
     request(contact, KAD_FIREWALLED_REQ,
-            createKadFirewalledRequestPayload(
-                network_.tcpPort(), network_.userHash(), SOURCE_CRYPT_SUPPORT),
+            createKadFirewalledRequestPayload(network_.tcpPort()),
             KAD_FIREWALLED_RES, KadTransactionPurpose::FIREWALLED_CHECK, {});
   }
   if (log::diagnostics()) {

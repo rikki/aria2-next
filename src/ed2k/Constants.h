@@ -108,7 +108,10 @@ constexpr uint8_t KAD_SEARCH_RES = 0x3b;
 constexpr uint8_t KAD_PUBLISH_SOURCE_REQ = 0x44;
 constexpr uint8_t KAD_PUBLISH_RES = 0x4b;
 constexpr uint8_t KAD_CALLBACK_REQ = 0x52;
-constexpr uint8_t KAD_FIREWALLED_REQ = 0x53;
+// The classic request carries the TCP port alone. The "2" variant adds the
+// user hash and options, so peers reject it when it is only two bytes long.
+constexpr uint8_t KAD_FIREWALLED_REQ = 0x50;
+constexpr uint8_t KAD_FIREWALLED2_REQ = 0x53;
 constexpr uint8_t KAD_FIREWALLED_RES = 0x58;
 constexpr uint8_t KAD_FIREWALLED_ACK_RES = 0x59;
 constexpr uint8_t KAD_PING = 0x60;
