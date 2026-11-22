@@ -661,7 +661,7 @@ void Kad::checkFirewall(Clock::time_point now)
   }
   firewallCheck_ = now;
   firewallCheckers_.clear();
-  auto contacts = table_.findClosest(randomId(), 4, false);
+  auto contacts = table_.findClosest(randomId(), 16, false);
   for (const auto& contact : contacts) {
     boost::system::error_code error;
     const auto address = ip::make_address_v4(contact.host, error);
