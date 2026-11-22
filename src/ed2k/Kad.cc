@@ -305,6 +305,11 @@ void Kad::datagram(const ip::udp::endpoint& from, const std::string& data)
   // Answers carry the sender's key in obfuscated packets only; plain ones
   // are answered in plain.
   KadContact sender = known(from);
+  if (opcode == KAD_FIREWALLED_REQ || opcode == KAD_FIREWALLED_RES ||
+      opcode == KAD_FIREWALLED_ACK_RES) {
+    log::diag("ED2K-DIAG: Kad rx op=0x{:02x} from {}:{} size={}", opcode,
+              from.address().to_string(), from.port(), payload.size());
+  }
   try {
     handle(from, opcode, payload, sender.udpKey);
   }
@@ -536,6 +541,8 @@ void Kad::handle(const ip::udp::endpoint& from, uint8_t opcode,
         !request.tcpPort) {
       return;
     }
+    log::diag("ED2K-DIAG: peer {} asked us to check tcp {}",
+              from.address().to_string(), request.tcpPort);
     network_.client(from.address().to_v4(), request.tcpPort)->checkFirewall();
     reply(from, senderKey, KAD_FIREWALLED_RES,
           createKadFirewalledResponsePayload(endpoint.host));
@@ -598,6 +605,8 @@ void Kad::searchResult(const KadContact&, const KadSearchResult& result)
 
 void Kad::tcpReachable(const ip::address_v4& from)
 {
+  log::diag("ED2K-DIAG: tcpReachable {} checker={}", from.to_string(),
+            firewallCheckers_.contains(from));
   if (!firewallCheckers_.contains(from)) {
     return;
   }
@@ -678,6 +687,17 @@ void Kad::checkFirewall(Clock::time_point now)
             createKadFirewalledRequestPayload(
                 network_.tcpPort(), network_.userHash(), SOURCE_CRYPT_SUPPORT),
             KAD_FIREWALLED_RES, KadTransactionPurpose::FIREWALLED_CHECK, {});
+  }
+  if (log::diagnostics()) {
+    std::string checkers;
+    for (const auto& address : firewallCheckers_) {
+      if (!checkers.empty()) {
+        checkers += ' ';
+      }
+      checkers += address.to_string();
+    }
+    log::diag("ED2K-DIAG: firewall check of tcp {} sent to {} checkers: {}",
+              network_.tcpPort(), firewallCheckers_.size(), checkers);
   }
 }
 

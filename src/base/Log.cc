@@ -11,6 +11,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstdlib>
 #include <memory>
 #include <mutex>
 
@@ -112,6 +113,12 @@ std::shared_ptr<spdlog::logger> logger()
 }
 
 bool enabled(Level level) { return static_cast<int>(level) >= threshold; }
+
+bool diagnostics()
+{
+  static const bool enabled = std::getenv("ARIA2_DIAG") != nullptr;
+  return enabled;
+}
 
 void flush() { logger()->flush(); }
 

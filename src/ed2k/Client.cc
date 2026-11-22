@@ -297,6 +297,11 @@ awaitable<void> Client::run(std::shared_ptr<Connection> connection,
     }
     while (connection->open()) {
       const auto packet = co_await connection->read();
+      if (!outgoing || packet.opcode == OP_KAD_FWTCPCHECK_ACK) {
+        log::diag("ED2K-DIAG: {} tcp rx op=0x{:02x} size={} from {}",
+                  outgoing ? "outgoing" : "inbound", packet.opcode,
+                  packet.payload.size(), address_.to_string());
+      }
       (adopter_ ? *adopter_ : *this).handle(packet);
     }
   }
@@ -669,6 +674,7 @@ void Client::handshakeDone()
         std::chrono::duration_cast<std::chrono::seconds>(handshakeTimeout));
   }
   if (std::exchange(firewallCheck_, false)) {
+    log::diag("ED2K-DIAG: sending fwtcpcheck ack to {}", describe());
     send(PROTO_EMULE, OP_KAD_FWTCPCHECK_ACK, {});
   }
   if (slotPending_) {
@@ -1206,6 +1212,8 @@ void Client::callBack()
 
 void Client::checkFirewall()
 {
+  log::diag("ED2K-DIAG: checking {}:{} (connected={})", address_.to_string(),
+            port_, connected());
   if (connected()) {
     if (handshaked_) {
       send(PROTO_EMULE, OP_KAD_FWTCPCHECK_ACK, {});

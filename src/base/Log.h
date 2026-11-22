@@ -26,6 +26,9 @@ void configure(const Config& config);
 bool parseLevel(std::string_view text, Level& level);
 std::shared_ptr<spdlog::logger> logger();
 bool enabled(Level level);
+// Probe logging, switched on with the ARIA2_DIAG environment variable so a
+// diagnostic build can be silenced without a rebuild.
+bool diagnostics();
 // Writes buffered records; the engine calls it once a second.
 void flush();
 
@@ -47,6 +50,13 @@ template <typename... Args>
 void notice(spdlog::format_string_t<Args...> format, Args&&... args)
 {
   if (enabled(Level::Notice))
+    logger()->info(format, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+void diag(spdlog::format_string_t<Args...> format, Args&&... args)
+{
+  if (diagnostics())
     logger()->info(format, std::forward<Args>(args)...);
 }
 

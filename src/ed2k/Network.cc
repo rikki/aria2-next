@@ -399,12 +399,16 @@ awaitable<void> Network::serve(asio::ip::tcp::socket socket)
   }
   auto connection = std::make_shared<Connection>(std::move(socket));
   connection->setIdleTimeout(40s);
+  log::diag("ED2K-DIAG: inbound tcp from {}:{}", remote.address().to_string(),
+            remote.port());
   try {
     co_await connection->accept(userHash_);
   }
   catch (const std::exception& failure) {
     log::debug("ED2K: incoming connection from {} failed: {}",
                remote.address().to_string(), failure.what());
+    log::diag("ED2K-DIAG: inbound handshake from {} failed: {}",
+              remote.address().to_string(), failure.what());
     co_return;
   }
   // Who it is shows in its hello; until then the client is known by its

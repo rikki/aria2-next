@@ -1,6 +1,7 @@
 /* Copyright (C) 2026 aria2-next contributors. GPL-2.0-or-later. */
 #include "ed2k/Connection.h"
 
+#include "base/Log.h"
 #include "ed2k/Compression.h"
 #include "ed2k/Constants.h"
 #include "ed2k/Crypto.h"
@@ -185,6 +186,9 @@ awaitable<void> Connection::accept(const std::string& ownUserHash)
 {
   char marker = 0;
   co_await readExactly(&marker, 1, false);
+  log::diag("ED2K-DIAG: inbound marker 0x{:02x} obfuscated={}",
+            static_cast<uint8_t>(marker),
+            !isProtocolMarker(static_cast<uint8_t>(marker)));
   if (isProtocolMarker(static_cast<uint8_t>(marker))) {
     pending_ = marker;
     co_return;
